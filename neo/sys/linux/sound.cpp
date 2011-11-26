@@ -41,15 +41,48 @@ If you have questions concerning this license or the applicable additional terms
 #include "../posix/posix_public.h"
 #include "sound.h"
 
+#ifdef JACK
+const char	*s_driverArgs[]	= { "best", "oss", "alsa", "jack", NULL };
+#else
 const char	*s_driverArgs[]	= { "best", "oss", "alsa", NULL };
+#endif
 
+#ifdef JACK
+static idCVar s_driver( "s_driver", s_driverArgs[0], CVAR_SYSTEM | CVAR_ARCHIVE, "sound driver. 'best' will attempt to use Jack, then fallback to ALSA or OSS if not available", s_driverArgs, idCmdSystem::ArgCompletion_String<s_driverArgs> );
+#else
 #ifndef NO_ALSA
 static idCVar s_driver( "s_driver", s_driverArgs[0], CVAR_SYSTEM | CVAR_ARCHIVE, "sound driver. 'best' will attempt to use alsa and fallback to OSS if not available", s_driverArgs, idCmdSystem::ArgCompletion_String<s_driverArgs> );
 #else
 static idCVar s_driver( "s_driver", "oss", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_ROM, "sound driver. only OSS is supported in this build" );
 #endif
+#endif
 
 idAudioHardware *idAudioHardware::Alloc() {
+#ifdef JACK
+	if ( !strcmp( s_driver.GetString(), "best" ) ) {
+		idAudioHardwareJACK *test_jack = new idAudioHardwareJACK;
+		if ( test_jack->Running() ) {
+			common->Printf( "Jack is available\n" );
+			return test_jack;
+		}
+		common->Printf( "Jack is not available\n" );
+		delete test_jack;
+		idAudioHardwareALSA *test = new idAudioHardwareALSA;
+		if ( test->DLOpen() ) {
+			common->Printf( "Alsa is available\n" );
+			return test;
+		}
+		common->Printf( "Alsa is not available\n" );
+		delete test;
+		return new idAudioHardwareOSS;
+	}
+	if ( !strcmp( s_driver.GetString(), "jack" ) ) {
+		return new idAudioHardwareJACK;
+	}		
+	if ( !strcmp( s_driver.GetString(), "alsa" ) ) {
+		return new idAudioHardwareALSA;
+	}
+#else
 #ifndef NO_ALSA
 	if ( !strcmp( s_driver.GetString(), "best" ) ) {
 		idAudioHardwareALSA *test = new idAudioHardwareALSA;
@@ -64,6 +97,7 @@ idAudioHardware *idAudioHardware::Alloc() {
 	if ( !strcmp( s_driver.GetString(), "alsa" ) ) {
 		return new idAudioHardwareALSA;
 	}
+#endif
 #endif
 	return new idAudioHardwareOSS;
 }

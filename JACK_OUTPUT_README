@@ -1,0 +1,24 @@
+Jack Output for Doom3 
+---------------------
+
+Howdy. Here is Jack Output for Doom3. Its basically Alpha/First version that compiled and worked.
+
+
+Notes: 
+
+To enable jack output use: scons JACK=1
+
+Then have your sound driver setting to "best" and it will try jack first. It will not start a server if one is not
+running. The server needs to be running at 44100 sample rate. At this moment only stereo is supported but 6 channel
+will be trivial to add later. 
+
+On 64bit, you need to ensure your jack server is compiled with mixed mode 32/64bit support.
+Additionally ensure with ldd that your doom3 binary is linking to the correct libjack.so that is mixed 32/64bit.
+
+
+Do Enjoy!
+
+-David Richards
+
+http://kradradio.com
+http://reeltoreel.am

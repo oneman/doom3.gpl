@@ -184,4 +184,74 @@ private:
 
 #endif // NO_ALSA
 
+
+
+
+
+#ifdef JACK
+
+#include <jack/jack.h>
+#include <jack/ringbuffer.h>
+
+class idAudioHardwareJACK : public idAudioHardware {
+private:
+	// if you can't write MIXBUFFER_SAMPLES all at once to the audio device, split in MIXBUFFER_CHUNKS
+	static const int	MIXBUFFER_CHUNKS = 4;
+
+	unsigned int		m_channels;
+	void				*m_buffer;
+	int					m_buffer_size;
+	const char *		m_jack_server_name;
+	const char *		m_jack_client_name;
+	// how many frames remaining to be written to the device
+	int					m_remainingFrames;
+
+	void				*m_handle;
+	
+public:
+						idAudioHardwareJACK() {
+
+							m_jack_client		= NULL;
+							m_jack_server_name 	= NULL;
+							m_jack_options		= JackNoStartServer;
+							m_jack_client_name	= "Doom3";
+							m_channels			= 0;
+							m_buffer			= NULL;
+							m_buffer_size		= 0;
+							m_remainingFrames	= 0;
+						}
+						virtual				~idAudioHardwareJACK();
+
+	jack_port_t 		*m_jack_ports[6];
+	jack_default_audio_sample_t *m_samples[6];
+	jack_default_audio_sample_t m_converted_samples1[4096 * 16];
+	jack_default_audio_sample_t m_converted_samples2[4096 * 16];
+	jack_client_t 		*m_jack_client;
+	jack_status_t 		m_jack_status;
+	jack_options_t		m_jack_options;
+	jack_ringbuffer_t *m_jack_ringbuffer[2];
+
+    bool				Initialize( void );
+	bool				Running();
+	bool				Lock( void **pDSLockedBuffer, ulong *dwDSLockedBufferSize ) { return false; }
+	bool				Unlock( void *pDSLockedBuffer, dword dwDSLockedBufferSize ) { return false; }
+	bool				GetCurrentPosition( ulong *pdwCurrentWriteCursor ) { return false; }
+	
+	bool				Flush();
+	void				Write( bool flushing );
+
+	int					GetNumberOfSpeakers( void ) { return m_channels; }
+	int					GetMixBufferSize( void );
+	short*				GetMixBuffer( void );
+
+private:
+	void				Release();
+	void				InitFailed();
+	void				PlayTestPattern();
+
+
+};
+
+#endif
+
 #endif

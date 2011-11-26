@@ -334,8 +334,12 @@ if ( ALSA != '0' ):
 	sound_list.append( '../../sys/linux/sound_alsa.cpp' )
 else:
 	sound_env.Append( CPPDEFINES = 'NO_ALSA' )
+if ( JACK != '0' ):
+	sound_list.append( '../../sys/linux/sound_jack.cpp' )
+	sound_env.Append( CPPDEFINES = 'JACK' )
+	local_env.Append( LIBS = [ 'jack' ] )
+	
 sound_lib = sound_env.StaticLibrary( 'sound', sound_list )
-
 local_env.Append( LIBS = [ 'pthread', 'dl' ] )
 if ( local_dedicated == 0 ):
 	local_env.Append( LIBS = [ 'X11', 'Xext', 'Xxf86vm' ] ) # 'Xxf86dga', 
